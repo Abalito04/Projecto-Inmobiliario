@@ -1,0 +1,229 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Alquileres - Fideicomiso Cuatro Soles</title>
+<link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+<div class="wrap">
+  <div class="hero">
+    <div class="hero-top" style="display: flex; justify-content: space-between; align-items: center;">
+      <div style="display: flex; align-items: center; gap: 12px;">
+        <div class="logo">CS</div>
+        <div><h1>Alquileres</h1><p>Fideicomiso Cuatro Soles</p></div>
+      </div>
+      <button id="themeToggle" class="btn btn-secondary" style="border-radius: 50%; width: 40px; height: 40px; padding: 0;">🌓</button>
+    </div>
+  </div>
+
+  <div class="tabs">
+    <button class="tab-btn active" type="button" data-tab="mov">Movimientos</button>
+    <button class="tab-btn" type="button" data-tab="dist">Distribución</button>
+    <button class="tab-btn" type="button" data-tab="inf">Informes</button>
+    <button class="tab-btn" type="button" data-tab="dev">Devengado</button>
+    <button class="tab-btn" type="button" data-tab="cuenta">Cuenta corriente</button>
+    <button class="tab-btn" type="button" data-tab="situacion">Situación por unidades</button>
+    <button class="tab-btn" type="button" data-tab="unidades">Gestión de Unidades</button>
+  </div>
+
+  <div id="unidadesView" class="hidden">
+    <div class="grid" style="display:grid;grid-template-columns: 450px 1fr; gap: 20px;">
+      <div class="card">
+        <h2 id="unitTitle">Nueva Unidad</h2>
+        <div class="error" id="unitError"></div>
+        <label>Nombre de la Unidad</label>
+        <input type="text" id="unitNombre" placeholder="Ej: Depto 11">
+
+        <label>Descripción / Características</label>
+        <textarea id="unitDescripcion" placeholder="Ej: 3 ambientes, 2 dormitorios, patio, cocina, pileta..." style="min-height: 80px;"></textarea>
+        
+        <div id="ownersContainer">
+          <label>Propietarios y Porcentajes (0 a 100)</label>
+          <div class="owner-rows" id="ownerRows">
+            <!-- Rows will be added here -->
+          </div>
+          <button class="btn btn-secondary" type="button" id="addOwnerBtn" style="width:100%;margin-bottom:16px;">+ Añadir Propietario</button>
+        </div>
+
+        <div class="toolbar">
+          <button class="btn btn-primary" type="button" id="unitSaveBtn" style="width:100%">Guardar Unidad</button>
+          <button class="btn btn-secondary hidden" type="button" id="unitCancelBtn" style="width:100%;margin-top:8px;">Cancelar Edición</button>
+        </div>
+      </div>
+      <div class="card">
+        <h2>Unidades Registradas</h2>
+        <div id="unitsTable"></div>
+      </div>
+    </div>
+  </div>
+
+  <div id="movView">
+    <div class="summary">
+      <div class="box"><span class="label">Total ingresos</span><div class="value ok" id="sumIngresos">$ 0,00</div></div>
+      <div class="box"><span class="label">Total egresos</span><div class="value bad" id="sumEgresos">$ 0,00</div></div>
+      <div class="box"><span class="label">Saldo acumulado</span><div class="value ok" id="sumSaldo">$ 0,00</div></div>
+    </div>
+    <div class="grid">
+      <div class="card">
+        <h2 id="movTitle">Nuevo movimiento</h2>
+        <div class="error" id="movError"></div>
+        <label>Fecha</label><input type="date" id="movFecha">
+        <label>Unidad</label><select id="movUnidad"></select>
+        <div class="two">
+          <div><label>Período</label><input type="month" id="movPeriodo"></div>
+          <div><label>Tipo</label><select id="movTipo"><option value="Ingreso">Ingreso</option><option value="Egreso">Egreso</option></select></div>
+        </div>
+        <div class="two">
+          <div><label>Concepto</label><select id="movConcepto"></select></div>
+          <div><label>Forma de cobro / pago</label><select id="movForma"><option value="Efectivo">Efectivo</option><option value="Transferencia">Transferencia</option></select></div>
+        </div>
+        <label>Importe</label><input type="number" id="movImporte" step="0.01" placeholder="0,00">
+        <label>Observación</label><textarea id="movObs"></textarea>
+        <div class="toolbar">
+          <button class="btn btn-primary" type="button" id="movSaveBtn">Guardar movimiento</button>
+          <button class="btn btn-secondary hidden" type="button" id="movCancelBtn">Cancelar edición</button>
+        </div>
+      </div>
+      <div class="card"><h2>Movimientos cargados</h2><div id="movTable"></div></div>
+    </div>
+  </div>
+
+  <div id="distView" class="hidden"><div class="card"><h2>Distribución por persona</h2><div id="distContainer"></div></div></div>
+
+  <div id="infView" class="hidden">
+    <div class="person-card" id="infFiltersCard">
+      <div class="person-head" onclick="toggleCard('infFiltersCard')">
+        <h2 style="margin:0; font-size: 18px;">🔍 Filtros de Búsqueda</h2>
+        <div style="font-size: 12px; color: var(--text-muted);">Click para expandir/contraer</div>
+      </div>
+      <div class="person-body">
+        <div class="filters-grid">
+          <div><label>Fecha desde</label><input type="date" id="infDesde"></div>
+          <div><label>Fecha hasta</label><input type="date" id="infHasta"></div>
+        </div>
+        <label>Unidades</label>
+        <div class="scroll-container" style="max-height: 120px; margin-bottom: 12px;">
+          <select id="infUnidades" multiple size="8" style="margin-bottom:0; border:none;"></select>
+        </div>
+        <div class="multi-hint">Seleccioná una o varias unidades.</div>
+        <div class="filters-grid">
+          <div><label>Tipo</label><select id="infTipo"><option value="">Todos</option><option value="Ingreso">Ingreso</option><option value="Egreso">Egreso</option></select></div>
+          <div>
+            <label>Conceptos</label>
+            <div class="scroll-container" style="max-height: 120px; margin-bottom: 12px;">
+              <select id="infConceptos" multiple size="8" style="margin-bottom:0; border:none;"></select>
+            </div>
+            <div class="multi-hint">Seleccioná uno o varios conceptos.</div>
+          </div>
+        </div>
+        <div class="filter-actions">
+          <button class="btn btn-primary" type="button" id="infApplyBtn">Aplicar filtros</button>
+          <button class="btn btn-secondary" type="button" id="infClearBtn">Limpiar filtros</button>
+        </div>
+      </div>
+    </div>
+    
+    <div class="card">
+        <h2>Resultado del informe</h2>
+        <div class="scroll-container" id="infTableContainer" style="max-height: 500px;">
+            <div id="infTable"></div>
+        </div>
+    </div>
+  </div>
+
+  <div id="devView" class="hidden">
+    <div class="grid">
+      <div class="card">
+        <h2 id="devTitle">Nuevo devengado</h2>
+        <div class="error" id="devError"></div>
+        <label>Unidad</label><select id="devUnidad"></select>
+        <div class="two">
+          <div><label>Período</label><input type="month" id="devPeriodo"></div>
+          <div><label>Estado</label><select id="devEstado"><option value="Alquilado">Alquilado</option><option value="No alquilado">No alquilado</option></select></div>
+        </div>
+        <label>Importe devengado</label><input type="number" id="devImporte" step="0.01" placeholder="0,00">
+        <label>Observación</label><textarea id="devObs"></textarea>
+        <div class="toolbar">
+          <button class="btn btn-primary" type="button" id="devSaveBtn">Guardar devengado</button>
+          <button class="btn btn-secondary hidden" type="button" id="devCancelBtn">Cancelar edición</button>
+        </div>
+      </div>
+      <div class="card"><h2>Devengados cargados</h2><div id="devTable"></div></div>
+    </div>
+  </div>
+
+  <div id="cuentaView" class="hidden">
+    <div class="card" style="margin-bottom:14px;">
+      <h2 style="font-size:17px;margin-bottom:10px;">Resumen general de alquileres</h2>
+      <div id="resumenGeneral"></div>
+    </div>
+    <div class="card" style="margin-bottom:14px;">
+      <h2 style="font-size:17px;margin-bottom:10px;">Deuda de alquiler por unidad</h2>
+      <div id="deudaUnidad"></div>
+    </div>
+    <div class="card">
+      <h2>Estado de cuenta de alquiler por unidad</h2><div class="note" style="margin-bottom:10px;">Esta cuenta corriente enfrenta solo <strong>devengado de alquiler</strong> contra <strong>cobros de concepto Alquiler</strong>.</div>
+      <label>Seleccionar unidad</label><select id="ccUnidad"></select>
+      <div id="ccTable" style="margin-top:12px;"></div>
+    </div>
+  </div>
+
+  <div id="situacionView" class="hidden">
+    <!-- PRIORIDAD: Generar Devengado -->
+    <div class="card">
+      <h2 style="font-size:20px;margin-bottom:15px;">Generar Devengados del Mes</h2>
+      <div class="filters-grid" style="display:grid; grid-template-columns: 1fr 1fr; gap: 20px; align-items: flex-end;">
+        <div>
+          <label for="genPeriodo">Período a generar (Año-Mes)</label>
+          <input type="month" id="genPeriodo" style="margin-bottom:0;">
+        </div>
+        <div>
+          <button class="btn btn-primary" type="button" id="genDevBtn" style="width:100%; height: 42px;">Cargar deudas del mes</button>
+        </div>
+      </div>
+      <div class="note" style="margin-top:15px;">
+        Esta herramienta genera automáticamente los cargos para todas las unidades <strong>activas</strong> usando el <strong>importe vigente</strong> configurado abajo.
+      </div>
+    </div>
+
+    <!-- Gestión de Situaciones (Colapsable) -->
+    <div class="person-card" id="sitManagementCard">
+      <div class="person-head" onclick="toggleCard('sitManagementCard')">
+        <h2 style="margin:0; font-size: 18px;">Configuración de Contratos y Precios</h2>
+        <div style="font-size: 12px; color: var(--text-muted);">Click para gestionar montos y alertas de actualización</div>
+      </div>
+      <div class="person-body">
+        <div class="grid" style="display:grid; grid-template-columns: 400px 1fr; gap: 20px; margin-top:15px;">
+          <div class="card" style="margin-bottom:0; border: 1px solid var(--border);">
+            <h3 id="sitTitle" style="margin-top:0; font-size: 18px;">Editar Situación</h3>
+            <div class="error" id="sitError"></div>
+            <label>Unidad</label><select id="sitUnidad"></select>
+            <div class="two">
+              <div><label>Estado</label><select id="sitEstado"><option value="Activa">Activa</option><option value="Inactiva">Inactiva</option></select></div>
+              <div><label>Inicio de contrato</label><input type="month" id="sitInicio"></div>
+            </div>
+            <div class="two">
+              <div><label>Duración (meses)</label><input type="number" id="sitDuracion" min="1" step="1"></div>
+              <div><label>Actualización (meses)</label><input type="number" id="sitActualizacion" min="1" step="1"></div>
+            </div>
+            <label>Importe vigente</label><input type="number" id="sitImporte" min="0" step="0.01">
+            <label>Observación</label><textarea id="sitObs" style="min-height: 60px;"></textarea>
+            <div class="toolbar">
+              <button class="btn btn-primary" type="button" id="sitSaveBtn" style="width:100%;">Guardar cambios</button>
+              <button class="btn btn-secondary hidden" type="button" id="sitCancelBtn" style="width:100%; margin-top:8px;">Cancelar edición</button>
+            </div>
+          </div>
+          <div class="card" style="margin-bottom:0; border: 1px solid var(--border);">
+            <h3 style="margin-top:0; font-size: 18px;">Estado de Contratos</h3>
+            <div id="sitTable"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+<script src="{{ url_for('static', filename='js/script.js') }}"></script>
+</body>
+</html>

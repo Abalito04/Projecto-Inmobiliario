@@ -1,0 +1,550 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Alquileres - Fideicomiso Cuatro Soles</title>
+<style>
+:root{
+  --bg:#f3f7fb; --bg2:#eef4ff; --card:#ffffff; --text:#1f2937; --muted:#6b7280;
+  --line:#e5e7eb; --primary:#2563eb; --green:#15803d; --green-bg:rgba(21,128,61,.12);
+  --red:#b91c1c; --red-bg:rgba(185,28,28,.12); --shadow:0 10px 30px rgba(15,23,42,.08);
+}
+*{box-sizing:border-box}
+body{margin:0;font-family:Arial,Helvetica,sans-serif;background:linear-gradient(180deg,var(--bg2),var(--bg));color:var(--text)}
+.wrap{max-width:1220px;margin:0 auto;padding:16px 12px 32px}
+.hero{background:linear-gradient(135deg,#1e40af,#2563eb);color:#fff;border-radius:24px;box-shadow:var(--shadow);padding:16px 18px;margin-bottom:14px}
+.hero-top{display:flex;align-items:center;gap:12px}
+.logo{width:42px;height:42px;border-radius:12px;background:rgba(255,255,255,.18);display:flex;align-items:center;justify-content:center;font-size:18px}
+.hero h1{margin:0;font-size:20px}
+.hero p{margin:4px 0 0;font-size:12px;opacity:.92}
+.tabs{display:flex;gap:10px;margin-bottom:14px;flex-wrap:wrap}
+.tab-btn{flex:1;background:#dbeafe;color:#1e3a8a;border:none;border-radius:16px;padding:12px 10px;font-weight:700;cursor:pointer;font-size:14px;min-width:120px}
+.tab-btn.active{background:#fff;color:#111827;box-shadow:var(--shadow)}
+.card{background:var(--card);border-radius:22px;box-shadow:var(--shadow);padding:16px;margin-bottom:14px}
+.card h2{margin:0 0 12px;font-size:19px}
+label{display:block;font-size:13px;font-weight:700;color:var(--muted);margin:0 0 6px}
+input,select,textarea,button{width:100%;font-size:15px;border-radius:15px;padding:12px 13px;font-family:inherit}
+input,select,textarea{border:1px solid var(--line);background:#f8fafc;color:var(--text);outline:none;margin-bottom:12px}
+textarea{resize:vertical;min-height:78px}
+.two{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.grid{display:grid;grid-template-columns:380px 1fr;gap:16px}
+.btn{border:none;font-weight:700;cursor:pointer}
+.btn-primary{background:var(--primary);color:#fff}
+.btn-secondary{background:#e0e7ff;color:#1e3a8a}
+.btn-danger{background:#fee2e2;color:#991b1b}
+.toolbar{display:flex;gap:10px;flex-wrap:wrap}
+.toolbar .btn{flex:1}
+.summary{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:14px}
+.summary .box{background:#fff;border-radius:18px;box-shadow:var(--shadow);padding:14px}
+.mobile-cards{display:grid;gap:10px}
+.mobile-card{background:#f8fafc;border:1px solid var(--line);border-radius:16px;padding:12px}
+.mobile-card .title{font-size:13px;color:var(--muted);margin-bottom:4px}
+.mobile-card .amount{font-size:22px;font-weight:700}
+.summary .label{color:var(--muted);font-size:12px;display:block;margin-bottom:6px}
+.summary .value{font-weight:700;font-size:23px}
+.ok{color:var(--green)} .bad{color:var(--red)}
+.table-wrap{overflow:auto;border:1px solid var(--line);border-radius:18px;background:#fff}
+table{width:100%;border-collapse:collapse;min-width:1000px}
+th,td{padding:11px 10px;text-align:left;border-bottom:1px solid var(--line);font-size:14px;vertical-align:top}
+th{background:#f8fafc;color:#475569;position:sticky;top:0;z-index:1}
+.tag{display:inline-block;padding:6px 10px;border-radius:999px;font-size:12px;font-weight:700;white-space:nowrap}
+.tag.income{color:var(--green);background:var(--green-bg)}
+.tag.expense{color:var(--red);background:var(--red-bg)}
+.tag.subtle{color:#92400e;background:#fef3c7}
+.actions{display:flex;gap:8px;flex-wrap:wrap}
+.mini{width:auto;padding:8px 11px;font-size:13px;border-radius:12px}
+.empty{text-align:center;color:var(--muted);padding:28px 16px;border:1px dashed var(--line);border-radius:18px;background:#fff}
+.hidden{display:none}
+.error{display:none;background:#fff7ed;color:#9a3412;border:1px solid #fed7aa;border-radius:14px;padding:11px 12px;margin-bottom:12px;font-size:13px}
+.person-card{background:#fff;border-radius:18px;box-shadow:var(--shadow);padding:14px;margin-bottom:12px}
+.person-head{display:flex;justify-content:space-between;align-items:center;gap:10px;margin-bottom:8px}
+.person-card h3{margin:0;font-size:18px}
+.person-total{font-weight:700;font-size:18px}
+.dist-line{display:flex;justify-content:space-between;gap:10px;padding:8px 0;border-bottom:1px solid var(--line);font-size:14px}
+.dist-line:last-child{border-bottom:none}
+.dist-meta{color:var(--muted);font-size:12px;margin-top:3px}
+.filters-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:12px}
+.filter-actions{display:flex;gap:10px;margin-top:4px}
+.filter-actions .btn{flex:1}
+.multi-hint{color:var(--muted);font-size:12px;margin-top:-4px;margin-bottom:10px}
+.status-chip{display:inline-block;padding:6px 10px;border-radius:999px;font-size:12px;font-weight:700;background:#e5e7eb;color:#374151}
+.note{font-size:12px;color:var(--muted);line-height:1.45}
+@media (max-width:960px){.grid,.summary,.filters-grid{grid-template-columns:1fr}}
+@media (max-width:560px){.two{grid-template-columns:1fr}.hero-top{align-items:flex-start}.filter-actions,.toolbar{flex-direction:column}.wrap{padding:12px 10px 24px}.card{padding:14px;border-radius:18px}.tab-btn{min-width:unset;padding:11px 8px;font-size:13px}table{min-width:760px}th,td{padding:9px 8px;font-size:13px}.summary .value{font-size:20px}}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="hero">
+    <div class="hero-top">
+      <div class="logo">☀</div>
+      <div><h1>Alquileres</h1><p>Fideicomiso Cuatro Soles</p></div>
+    </div>
+  </div>
+
+  <div class="tabs">
+    <button class="tab-btn active" type="button" data-tab="mov">Movimientos</button>
+    <button class="tab-btn" type="button" data-tab="dist">Distribución</button>
+    <button class="tab-btn" type="button" data-tab="inf">Informes</button>
+    <button class="tab-btn" type="button" data-tab="dev">Devengado</button>
+    <button class="tab-btn" type="button" data-tab="cuenta">Cuenta corriente</button>
+    <button class="tab-btn" type="button" data-tab="situacion">Situación por unidades</button>
+  </div>
+
+  <div id="movView">
+    <div class="summary">
+      <div class="box"><span class="label">Total ingresos</span><div class="value ok" id="sumIngresos">$ 0,00</div></div>
+      <div class="box"><span class="label">Total egresos</span><div class="value bad" id="sumEgresos">$ 0,00</div></div>
+      <div class="box"><span class="label">Saldo acumulado</span><div class="value ok" id="sumSaldo">$ 0,00</div></div>
+    </div>
+    <div class="grid">
+      <div class="card">
+        <h2 id="movTitle">Nuevo movimiento</h2>
+        <div class="error" id="movError"></div>
+        <label>Fecha</label><input type="date" id="movFecha">
+        <label>Unidad</label><select id="movUnidad"></select>
+        <div class="two">
+          <div><label>Período</label><input type="month" id="movPeriodo"></div>
+          <div><label>Tipo</label><select id="movTipo"><option value="Ingreso">Ingreso</option><option value="Egreso">Egreso</option></select></div>
+        </div>
+        <div class="two">
+          <div><label>Concepto</label><select id="movConcepto"></select></div>
+          <div><label>Forma de cobro / pago</label><select id="movForma"><option value="Efectivo">Efectivo</option><option value="Transferencia">Transferencia</option></select></div>
+        </div>
+        <label>Importe</label><input type="number" id="movImporte" step="0.01" placeholder="0,00">
+        <label>Observación</label><textarea id="movObs"></textarea>
+        <div class="toolbar">
+          <button class="btn btn-primary" type="button" id="movSaveBtn">Guardar movimiento</button>
+          <button class="btn btn-secondary hidden" type="button" id="movCancelBtn">Cancelar edición</button>
+        </div>
+      </div>
+      <div class="card"><h2>Movimientos cargados</h2><div id="movTable"></div></div>
+    </div>
+  </div>
+
+  <div id="distView" class="hidden"><div class="card"><h2>Distribución por persona</h2><div id="distContainer"></div></div></div>
+
+  <div id="infView" class="hidden">
+    <div class="card">
+      <h2>Informes</h2>
+      <div class="filters-grid">
+        <div><label>Fecha desde</label><input type="date" id="infDesde"></div>
+        <div><label>Fecha hasta</label><input type="date" id="infHasta"></div>
+      </div>
+      <label>Unidades</label><select id="infUnidades" multiple size="8"></select>
+      <div class="multi-hint">Podés elegir una o varias unidades.</div>
+      <div class="filters-grid">
+        <div><label>Tipo</label><select id="infTipo"><option value="">Todos</option><option value="Ingreso">Ingreso</option><option value="Egreso">Egreso</option></select></div>
+        <div><label>Conceptos</label><select id="infConceptos" multiple size="8"></select><div class="multi-hint">Podés elegir uno o varios conceptos.</div></div>
+      </div>
+      <div class="filter-actions">
+        <button class="btn btn-primary" type="button" id="infApplyBtn">Aplicar filtros</button>
+        <button class="btn btn-secondary" type="button" id="infClearBtn">Limpiar filtros</button>
+      </div>
+    </div>
+    <div class="card"><h2>Resultado del informe</h2><div id="infTable"></div></div>
+  </div>
+
+  <div id="devView" class="hidden">
+    <div class="grid">
+      <div class="card">
+        <h2 id="devTitle">Nuevo devengado</h2>
+        <div class="error" id="devError"></div>
+        <label>Unidad</label><select id="devUnidad"></select>
+        <div class="two">
+          <div><label>Período</label><input type="month" id="devPeriodo"></div>
+          <div><label>Estado</label><select id="devEstado"><option value="Alquilado">Alquilado</option><option value="No alquilado">No alquilado</option></select></div>
+        </div>
+        <label>Importe devengado</label><input type="number" id="devImporte" step="0.01" placeholder="0,00">
+        <label>Observación</label><textarea id="devObs"></textarea>
+        <div class="toolbar">
+          <button class="btn btn-primary" type="button" id="devSaveBtn">Guardar devengado</button>
+          <button class="btn btn-secondary hidden" type="button" id="devCancelBtn">Cancelar edición</button>
+        </div>
+      </div>
+      <div class="card"><h2>Devengados cargados</h2><div id="devTable"></div></div>
+    </div>
+  </div>
+
+  <div id="cuentaView" class="hidden">
+
+        <div class="card" style="margin-bottom:14px;">
+          <h2 style="font-size:17px;margin-bottom:10px;">Resumen general de alquileres</h2>
+          <div id="resumenGeneral"></div>
+        </div>
+
+        <div class="card" style="margin-bottom:14px;">
+          <h2 style="font-size:17px;margin-bottom:10px;">Deuda de alquiler por unidad</h2>
+          <div id="deudaUnidad"></div>
+        </div>
+
+    <div class="card">
+      <h2>Estado de cuenta de alquiler por unidad</h2><div class="note" style="margin-bottom:10px;">Esta cuenta corriente enfrenta solo <strong>devengado de alquiler</strong> contra <strong>cobros de concepto Alquiler</strong>.</div>
+      <label>Seleccionar unidad</label><select id="ccUnidad"></select>
+      <div id="ccTable" style="margin-top:12px;"></div>
+    </div>
+  </div>
+
+  <div id="situacionView" class="hidden">
+    <div class="grid">
+      <div class="card">
+        <h2 id="sitTitle">Situación por unidad</h2>
+        <div class="error" id="sitError"></div>
+        <label>Unidad</label><select id="sitUnidad"></select>
+        <div class="two">
+          <div><label>Estado</label><select id="sitEstado"><option value="Activa">Activa</option><option value="Inactiva">Inactiva</option></select></div>
+          <div><label>Inicio de contrato</label><input type="month" id="sitInicio"></div>
+        </div>
+        <div class="two">
+          <div><label>Duración del contrato (meses)</label><input type="number" id="sitDuracion" min="1" step="1"></div>
+          <div><label>Actualización cada (meses)</label><input type="number" id="sitActualizacion" min="1" step="1"></div>
+        </div>
+        <label>Importe vigente</label><input type="number" id="sitImporte" min="0" step="0.01">
+        <label>Observación</label><textarea id="sitObs"></textarea>
+        <div class="toolbar">
+          <button class="btn btn-primary" type="button" id="sitSaveBtn">Guardar situación</button>
+          <button class="btn btn-secondary hidden" type="button" id="sitCancelBtn">Cancelar edición</button>
+        </div>
+        
+        <div class="card" style="margin-top:14px;padding:14px;background:#f8fafc;">
+          <h2 style="font-size:17px;margin-bottom:10px;">Generar devengado</h2>
+          <label for="genPeriodo">Período a generar</label>
+          <input type="month" id="genPeriodo">
+          <button class="btn btn-primary" type="button" id="genDevBtn">Generar devengado del período</button>
+          <div class="note" style="margin-top:10px;">
+            Etapa 1: genera automáticamente los devengados para las unidades <strong>activas</strong>,
+            usando el <strong>importe vigente</strong> cargado en Situación por unidades.
+            Las unidades inactivas no generan devengado.
+          </div>
+        </div>
+
+        <div class="note">Esta solapa queda como base relativamente estática. No toca tus movimientos ni tus devengados ya cargados.</div>
+      </div>
+      <div class="card"><h2>Situaciones cargadas</h2><div id="sitTable"></div></div>
+    </div>
+  </div>
+</div>
+
+<script>
+const MOV_STORAGE = 'alquileres_v9_base_mov';
+const DEV_STORAGE = 'alquileres_v9_base_dev';
+const SIT_STORAGE = 'alquileres_v14_situacion';
+
+const ownersConfig = {
+  "Depto 1": {"Verónica":0.5,"Noelia":0.5},"Depto 2": {"Verónica":0.5,"Noelia":0.5},"Depto 3": {"Verónica":0.5,"Noelia":0.5},
+  "Depto 4": {"Verónica":0.5,"Noelia":0.5},"Depto 5": {"Verónica":0.5,"Noelia":0.5},"Depto 6": {"Verónica":0.5,"Noelia":0.5},
+  "Depto 7": {"Verónica":0.5,"Noelia":0.5},"Depto 8": {"Verónica":0.5,"Noelia":0.5},"Depto 9": {"Verónica":0.5,"Noelia":0.5},"Depto 10": {"Verónica":0.5,"Noelia":0.5},
+  "Dúplex 5": {"Verónica":0.25,"Noelia":0.25,"Emanuel":0.25,"Analía":0.25},"Dúplex 6": {"Verónica":0.25,"Noelia":0.25,"Emanuel":0.25,"Analía":0.25},
+  "Dúplex 15": {"Noelia":1},"Dúplex 16": {"Noelia":1},"Dúplex 17": {"Noelia":1},"Dúplex 18": {"Noelia":1},
+  "Galpón 1": {"Emanuel":1},"Galpón 3": {"Noelia":1},"Galpón 4": {"Verónica":0.3333,"Noelia":0.3333,"Emanuel":0.3334},"Galpón Kennedy": {"Verónica":0.5,"Noelia":0.5}
+};
+const incomeTypes = ["Alquiler","Intereses","Energía","Expensas","Cochera"];
+const expenseTypes = ["Comisión","Gastos","Mantenimiento"];
+const allConcepts = [...incomeTypes, ...expenseTypes];
+
+const $ = id => document.getElementById(id);
+let movEditId = null, devEditId = null, sitEditId = null;
+
+function load(key){ try { return JSON.parse(localStorage.getItem(key)) || []; } catch { return []; } }
+function save(key,data){ localStorage.setItem(key, JSON.stringify(data)); }
+function money(v){ return new Intl.NumberFormat('es-AR',{style:'currency',currency:'ARS',minimumFractionDigits:2}).format(v || 0); }
+function showError(id,msg){ $(id).style.display='block'; $(id).textContent=msg; }
+function hideError(id){ $(id).style.display='none'; $(id).textContent=''; }
+
+function fillUnitSelect(selectId){
+  const sel = $(selectId); sel.innerHTML = '';
+  Object.keys(ownersConfig).forEach(u => {
+    const o = document.createElement('option'); o.value = u; o.textContent = u; sel.appendChild(o);
+  });
+}
+function fillConcepts(){
+  $('movConcepto').innerHTML = '';
+  const list = $('movTipo').value === 'Ingreso' ? incomeTypes : expenseTypes;
+  list.forEach(c => { const o = document.createElement('option'); o.value = c; o.textContent = c; $('movConcepto').appendChild(o); });
+
+  $('infConceptos').innerHTML = '';
+  allConcepts.forEach(c => { const o = document.createElement('option'); o.value = c; o.textContent = c; $('infConceptos').appendChild(o); });
+}
+function fillAllSelects(){
+  ['movUnidad','devUnidad','ccUnidad','sitUnidad','infUnidades'].forEach(fillUnitSelect);
+  fillConcepts();
+}
+
+function openTab(name){
+  const map = {mov:'movView',dist:'distView',inf:'infView',dev:'devView',cuenta:'cuentaView',situacion:'situacionView'};
+  Object.values(map).forEach(id => $(id).classList.add('hidden'));
+  document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+  $(map[name]).classList.remove('hidden');
+  document.querySelector(`.tab-btn[data-tab="${name}"]`).classList.add('active');
+}
+
+document.querySelectorAll('.tab-btn').forEach(btn => {
+  btn.addEventListener('click', () => openTab(btn.dataset.tab));
+});
+
+function resetMovForm(){
+  movEditId = null; $('movTitle').textContent = 'Nuevo movimiento'; $('movSaveBtn').textContent = 'Guardar movimiento'; $('movCancelBtn').classList.add('hidden');
+  hideError('movError'); $('movFecha').value = new Date().toISOString().split('T')[0]; $('movPeriodo').value = ''; $('movTipo').value = 'Ingreso'; fillConcepts(); $('movForma').value = 'Efectivo'; $('movImporte').value = ''; $('movObs').value = '';
+}
+function saveMov(){
+  hideError('movError');
+  const fecha = $('movFecha').value, unidad = $('movUnidad').value, periodo = $('movPeriodo').value, tipo = $('movTipo').value, concepto = $('movConcepto').value, forma = $('movForma').value, importe = Number($('movImporte').value), obs = $('movObs').value.trim();
+  if(!fecha || !periodo || !Number.isFinite(importe) || importe <= 0){ showError('movError','Completá fecha, período e importe mayor a 0.'); return; }
+  const monto = tipo === 'Ingreso' ? importe : -importe;
+  const data = load(MOV_STORAGE);
+  const reg = {id: movEditId || (Date.now().toString()+Math.random().toString(16).slice(2)), fecha, unidad, periodo, tipo, subtipo: concepto, forma, monto, obs};
+  if(movEditId){
+    const i = data.findIndex(x => x.id === movEditId);
+    if(i >= 0) data[i] = reg; else data.push(reg);
+  } else data.push(reg);
+  save(MOV_STORAGE, data); resetMovForm(); renderAll();
+}
+function editMov(id){
+  const item = load(MOV_STORAGE).find(x => x.id === id); if(!item) return;
+  movEditId = id; $('movTitle').textContent = 'Editar movimiento'; $('movSaveBtn').textContent = 'Guardar cambios'; $('movCancelBtn').classList.remove('hidden');
+  $('movFecha').value = item.fecha; $('movUnidad').value = item.unidad; $('movPeriodo').value = item.periodo; $('movTipo').value = item.tipo; fillConcepts(); $('movConcepto').value = item.subtipo; $('movForma').value = item.forma || 'Efectivo'; $('movImporte').value = Math.abs(item.monto); $('movObs').value = item.obs || ''; openTab('mov');
+}
+function deleteMov(id){
+  const data = load(MOV_STORAGE), item = data.find(x => x.id === id); if(!item) return;
+  if(!confirm(`¿Eliminar ${item.unidad} - ${item.subtipo} - ${item.periodo}?`)) return;
+  save(MOV_STORAGE, data.filter(x => x.id !== id)); if(movEditId === id) resetMovForm(); renderAll();
+}
+function renderMov(){
+  const data = load(MOV_STORAGE).sort((a,b) => a.fecha.localeCompare(b.fecha));
+  let ing = 0, egr = 0, saldo = 0;
+  if(!data.length){ $('movTable').innerHTML = '<div class="empty">Todavía no cargaste movimientos.</div>'; }
+  else {
+    let html = '<div class="table-wrap"><table><thead><tr><th>Fecha</th><th>Unidad</th><th>Período</th><th>Tipo</th><th>Concepto</th><th>Forma</th><th>Monto</th><th>Saldo</th><th>Observación</th><th>Acciones</th></tr></thead><tbody>';
+    data.forEach(r => {
+      if(r.monto >= 0) ing += r.monto; else egr += Math.abs(r.monto);
+      saldo += r.monto;
+      html += `<tr><td>${r.fecha}</td><td>${r.unidad}</td><td>${r.periodo}</td><td><span class="tag ${r.tipo==='Ingreso'?'income':'expense'}">${r.tipo}</span></td><td>${r.subtipo}</td><td><span class="tag subtle">${r.forma || ''}</span></td><td class="${r.monto>=0?'ok':'bad'}"><strong>${money(r.monto)}</strong></td><td><strong>${money(saldo)}</strong></td><td>${r.obs || ''}</td><td><div class="actions"><button class="btn btn-secondary mini" onclick="editMov('${r.id}')">Editar</button><button class="btn btn-danger mini" onclick="deleteMov('${r.id}')">Eliminar</button></div></td></tr>`;
+    });
+    html += '</tbody></table></div>'; $('movTable').innerHTML = html;
+  }
+  $('sumIngresos').textContent = money(ing); $('sumEgresos').textContent = money(egr); $('sumSaldo').textContent = money(ing - egr); $('sumSaldo').className = 'value ' + ((ing - egr) >= 0 ? 'ok' : 'bad');
+}
+
+function renderDist(){
+  const data = load(MOV_STORAGE).sort((a,b) => a.fecha.localeCompare(b.fecha));
+  const grouped = {};
+  data.forEach(m => {
+    const owners = ownersConfig[m.unidad] || {};
+    Object.entries(owners).forEach(([persona,p]) => {
+      if(!grouped[persona]) grouped[persona] = [];
+      grouped[persona].push({...m, porcentaje:p, importeAsignado:m.monto*p});
+    });
+  });
+  if(!Object.keys(grouped).length){ $('distContainer').innerHTML = '<div class="empty">Todavía no hay distribución generada.</div>'; return; }
+  let html = '';
+  Object.keys(grouped).sort().forEach(persona => {
+    const rows = grouped[persona], total = rows.reduce((a,r) => a + r.importeAsignado, 0);
+    html += `<div class="person-card"><div class="person-head"><h3>${persona}</h3><div class="person-total ${total>=0?'ok':'bad'}">${money(total)}</div></div>`;
+    rows.forEach(r => {
+      html += `<div class="dist-line"><div><div><strong>${r.unidad}</strong> · ${r.subtipo}</div><div class="dist-meta">${r.fecha} · ${r.periodo} · ${r.tipo} · ${(r.porcentaje*100).toFixed(2).replace('.',',')}%</div></div><div class="${r.importeAsignado>=0?'ok':'bad'}"><strong>${money(r.importeAsignado)}</strong></div></div>`;
+    });
+    html += '</div>';
+  });
+  $('distContainer').innerHTML = html;
+}
+
+function resetDevForm(){
+  devEditId = null; $('devTitle').textContent = 'Nuevo devengado'; $('devSaveBtn').textContent = 'Guardar devengado'; $('devCancelBtn').classList.add('hidden');
+  hideError('devError'); $('devPeriodo').value = ''; $('devEstado').value = 'Alquilado'; $('devImporte').value = ''; $('devObs').value = '';
+}
+function saveDev(){
+  hideError('devError');
+  const unidad = $('devUnidad').value, periodo = $('devPeriodo').value, estado = $('devEstado').value, importe = Number($('devImporte').value || 0), obs = $('devObs').value.trim();
+  if(!periodo){ showError('devError', 'Completá el período.'); return; }
+  if(estado === 'Alquilado' && (!Number.isFinite(importe) || importe <= 0)){ showError('devError', 'Si está alquilado, el importe debe ser mayor a 0.'); return; }
+  const data = load(DEV_STORAGE);
+  const reg = {id: devEditId || (Date.now().toString()+Math.random().toString(16).slice(2)), unidad, periodo, estado, importe: estado === 'No alquilado' ? 0 : importe, obs};
+  if(devEditId){
+    const i = data.findIndex(x => x.id === devEditId);
+    if(i >= 0) data[i] = reg; else data.push(reg);
+  } else data.push(reg);
+  save(DEV_STORAGE, data); resetDevForm(); renderDev(); renderCuenta(); renderResumenCuenta(); renderDeudaUnidad();
+}
+function editDev(id){
+  const item = load(DEV_STORAGE).find(x => x.id === id); if(!item) return;
+  devEditId = id; $('devTitle').textContent = 'Editar devengado'; $('devSaveBtn').textContent = 'Guardar cambios'; $('devCancelBtn').classList.remove('hidden');
+  $('devUnidad').value = item.unidad; $('devPeriodo').value = item.periodo; $('devEstado').value = item.estado; $('devImporte').value = item.importe; $('devObs').value = item.obs || ''; openTab('dev');
+}
+function deleteDev(id){
+  const data = load(DEV_STORAGE), item = data.find(x => x.id === id); if(!item) return;
+  if(!confirm(`¿Eliminar devengado de ${item.unidad} - ${item.periodo}?`)) return;
+  save(DEV_STORAGE, data.filter(x => x.id !== id)); if(devEditId === id) resetDevForm(); renderDev(); renderCuenta(); renderResumenCuenta(); renderDeudaUnidad();
+}
+function renderDev(){
+  const data = load(DEV_STORAGE).sort((a,b) => (a.periodo || '').localeCompare(b.periodo || '') || a.unidad.localeCompare(b.unidad));
+  if(!data.length){ $('devTable').innerHTML = '<div class="empty">Todavía no cargaste devengados.</div>'; return; }
+  let html = '<div class="table-wrap"><table><thead><tr><th>Unidad</th><th>Período</th><th>Estado</th><th>Importe devengado</th><th>Observación</th><th>Acciones</th></tr></thead><tbody>';
+  data.forEach(r => {
+    html += `<tr><td>${r.unidad}</td><td>${r.periodo}</td><td><span class="status-chip">${r.estado}</span></td><td class="${r.importe>=0?'ok':'bad'}"><strong>${money(r.importe)}</strong></td><td>${r.obs || ''}</td><td><div class="actions"><button class="btn btn-secondary mini" onclick="editDev('${r.id}')">Editar</button><button class="btn btn-danger mini" onclick="deleteDev('${r.id}')">Eliminar</button></div></td></tr>`;
+  });
+  html += '</tbody></table></div>'; $('devTable').innerHTML = html;
+}
+
+
+function renderResumenCuenta(){
+  const dev = load(DEV_STORAGE).filter(d => d.estado === 'Alquilado');
+  const mov = load(MOV_STORAGE);
+
+  const totalDev = dev.reduce((a,b)=>a + Number(b.importe||0),0);
+  const totalCob = mov
+    .filter(m => m.tipo === 'Ingreso' && String(m.subtipo || '').trim().toLowerCase() === 'alquiler')
+    .reduce((a,b)=>a + Number(b.monto||0),0);
+  const saldo = totalDev - totalCob;
+
+  const el = $('resumenGeneral');
+  el.innerHTML = `
+    <div class="mobile-cards">
+      <div class="mobile-card">
+        <div class="title">Total devengado</div>
+        <div class="amount bad">${money(totalDev)}</div>
+      </div>
+      <div class="mobile-card">
+        <div class="title">Total cobrado (solo alquiler)</div>
+        <div class="amount ok">${money(totalCob)}</div>
+      </div>
+      <div class="mobile-card">
+        <div class="title">Saldo total pendiente</div>
+        <div class="amount ${saldo >= 0 ? 'bad' : 'ok'}">${money(saldo)}</div>
+      </div>
+    </div>
+  `;
+}
+
+function renderDeudaUnidad(){
+  const dev = load(DEV_STORAGE).filter(d => d.estado === 'Alquilado');
+  const mov = load(MOV_STORAGE);
+
+  const unidades = {};
+
+  dev.forEach(d=>{
+    if(!unidades[d.unidad]) unidades[d.unidad]={dev:0,cob:0};
+    unidades[d.unidad].dev += Number(d.importe||0);
+  });
+
+  mov
+    .filter(m => m.tipo === 'Ingreso' && String(m.subtipo || '').trim().toLowerCase() === 'alquiler')
+    .forEach(m=>{
+      if(!unidades[m.unidad]) unidades[m.unidad]={dev:0,cob:0};
+      unidades[m.unidad].cob += Number(m.monto||0);
+    });
+
+  const arr = Object.entries(unidades).map(([u,v])=>({
+    unidad:u,
+    dev:v.dev,
+    cob:v.cob,
+    saldo:v.dev - v.cob
+  })).sort((a,b)=>b.saldo - a.saldo);
+
+  const el = $('deudaUnidad');
+  if(!arr.length){
+    el.innerHTML = '<div class="empty">Todavía no hay datos de alquiler para mostrar.</div>';
+    return;
+  }
+
+  el.innerHTML = '<div class="table-wrap"><table><thead><tr><th>Unidad</th><th>Devengado</th><th>Cobrado</th><th>Saldo</th></tr></thead><tbody>' +
+    arr.map(r=>`<tr>
+      <td>${r.unidad}</td>
+      <td class="bad">${money(r.dev)}</td>
+      <td class="ok">${money(r.cob)}</td>
+      <td><strong class="${r.saldo > 0 ? 'bad' : 'ok'}">${money(r.saldo)}</strong></td>
+    </tr>`).join('') + '</tbody></table></div>';
+}
+
+function renderCuenta(){
+  const unidad = $('ccUnidad').value;
+  const dev = load(DEV_STORAGE).filter(d => d.unidad === unidad && d.estado === 'Alquilado');
+  const mov = load(MOV_STORAGE).filter(
+    m => m.unidad === unidad &&
+         m.tipo === 'Ingreso' &&
+         String(m.subtipo || '').trim().toLowerCase() === 'alquiler'
+  );
+
+  const rows = [];
+
+  dev.forEach(d=>{
+    rows.push({
+      fecha: d.periodo + '-01',
+      periodo: d.periodo,
+      concepto: 'Devengado alquiler',
+      debe: Number(d.importe || 0),
+      haber: 0
+    });
+  });
+
+  mov.forEach(m=>{
+    rows.push({
+      fecha: m.fecha,
+      periodo: m.periodo,
+      concepto: 'Cobro alquiler',
+      debe: 0,
+      haber: Number(m.monto || 0)
+    });
+  });
+
+  rows.sort((a,b)=>a.fecha.localeCompare(b.fecha));
+
+  if(!rows.length){
+    $('ccTable').innerHTML = '<div class="empty">Sin movimientos de alquiler para esta unidad.</div>';
+    return;
+  }
+
+  let saldo = 0;
+  let htmlCuenta = '<div class="table-wrap"><table><thead><tr><th>Fecha</th><th>Período</th><th>Concepto</th><th>Debe</th><th>Haber</th><th>Saldo</th></tr></thead><tbody>';
+
+  rows.forEach(r => {
+    saldo += (r.debe || 0) - (r.haber || 0);
+    htmlCuenta += `<tr>
+      <td>${r.fecha}</td>
+      <td>${r.periodo}</td>
+      <td>${r.concepto}</td>
+      <td class="bad">${r.debe ? money(r.debe) : ''}</td>
+      <td class="ok">${r.haber ? money(r.haber) : ''}</td>
+      <td><strong class="${saldo > 0 ? 'bad' : 'ok'}">${money(saldo)}</strong></td>
+    </tr>`;
+  });
+
+  htmlCuenta += '</tbody></table></div>';
+  $('ccTable').innerHTML = htmlCuenta;
+}
+
+function renderAll(){ renderMov(); renderDist(); renderReport(load(MOV_STORAGE).sort((a,b)=>a.fecha.localeCompare(b.fecha))); renderDev(); renderCuenta(); renderResumenCuenta(); renderDeudaUnidad(); renderSit(); }
+
+$('movTipo').addEventListener('change', fillConcepts);
+$('movSaveBtn').addEventListener('click', saveMov);
+$('movCancelBtn').addEventListener('click', resetMovForm);
+$('devSaveBtn').addEventListener('click', saveDev);
+$('devCancelBtn').addEventListener('click', resetDevForm);
+$('infApplyBtn').addEventListener('click', applyFilters);
+$('infClearBtn').addEventListener('click', clearFilters);
+$('ccUnidad').addEventListener('change', renderCuenta);
+$('sitSaveBtn').addEventListener('click', saveSit);
+$('sitCancelBtn').addEventListener('click', resetSitForm);
+genDevBtn.addEventListener('click', generarDevengadoDesdeSituacion);
+
+window.editMov = editMov; window.deleteMov = deleteMov; window.editDev = editDev; window.deleteDev = deleteDev; window.editSit = editSit; window.deleteSit = deleteSit;
+
+fillAllSelects();
+resetMovForm(); resetDevForm(); resetSitForm();
+renderAll();
+
+function poblarUnidadesSelect(){
+  const selects = document.querySelectorAll('select[data-unidad]');
+  const unidades = Object.keys(ownersConfig || {});
+  selects.forEach(sel=>{
+    const current = sel.value;
+    sel.innerHTML = '<option value="">Seleccionar unidad</option>' +
+      unidades.map(u=>`<option value="${u}">${u}</option>`).join('');
+    if(current) sel.value = current;
+  });
+}
+document.addEventListener('DOMContentLoaded', poblarUnidadesSelect);
+
+</script>
+</body>
+</html>
