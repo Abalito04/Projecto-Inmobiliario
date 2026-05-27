@@ -96,14 +96,45 @@ function resetUnitForm() {
     $('unitCancelBtn').classList.add('hidden');
     $('unitNombre').value = '';
     $('unitDescripcion').value = '';
+    $('unitNomenclatura').value = '';
+    $('unitSuministroGas').value = '';
+    $('unitSuministroLuz').value = '';
+    $('unitSuministroAgua').value = '';
+    $('unitTipo').value = 'Vivienda';
+    $('unitContribInmob').value = '';
+    $('unitContribComercio').value = '';
+    toggleComercioFields();
     $('ownerRows').innerHTML = '';
     hideError('unitError');
+}
+
+function toggleComercioFields() {
+    const isComercio = $('unitTipo').value === 'Comercio';
+    $('unitComercioWrap').classList.toggle('hidden', !isComercio);
+    if (!isComercio) {
+        $('unitContribInmob').value = '';
+        $('unitContribComercio').value = '';
+    }
 }
 
 async function saveUnit() {
     hideError('unitError');
     const nombre = $('unitNombre').value.trim();
     const descripcion = $('unitDescripcion').value.trim();
+    const tipo = $('unitTipo').value;
+    const unitData = {
+        id: unitEditId,
+        nombre,
+        descripcion,
+        nomenclatura_catastral: $('unitNomenclatura').value.trim(),
+        suministro_gas: $('unitSuministroGas').value.trim(),
+        suministro_luz: $('unitSuministroLuz').value.trim(),
+        suministro_agua: $('unitSuministroAgua').value.trim(),
+        tipo,
+        contribucion_inmobiliaria: tipo === 'Comercio' ? $('unitContribInmob').value.trim() : '',
+        contribucion_comercio: tipo === 'Comercio' ? $('unitContribComercio').value.trim() : '',
+        propietarios: {}
+    };
     const ownerRows = document.querySelectorAll('.owner-row');
     const propietarios = {};
     let totalPct = 0;
@@ -121,7 +152,8 @@ async function saveUnit() {
         if (!confirm(`La suma de porcentajes es ${totalPct.toFixed(2)}%, no es exactamente 100%. ¿Deseas continuar?`)) return;
     }
     try {
-        await apiFetch('/api/unidades', 'POST', { id: unitEditId, nombre, descripcion, propietarios });
+        unitData.propietarios = propietarios;
+        await apiFetch('/api/unidades', 'POST', unitData);
         resetUnitForm();
         await loadData();
     } catch (e) {
@@ -131,12 +163,25 @@ async function saveUnit() {
 
 function renderUnits() {
     if (!allUnidades.length) { $('unitsTable').innerHTML = '<div class="empty">No hay unidades registradas.</div>'; return; }
-    let html = '<div class="table-wrap"><table><thead><tr><th>Unidad</th><th>Descripción</th><th>Propietarios</th><th>Acciones</th></tr></thead><tbody>';
+    let html = '<div class="table-wrap"><table><thead><tr><th>Unidad</th><th>Datos</th><th>Servicios / contribuciones</th><th>Propietarios</th><th>Acciones</th></tr></thead><tbody>';
     allUnidades.forEach(u => {
         const ownersText = Object.entries(u.propietarios).map(([n, p]) => `${n} (${(p * 100).toFixed(1)}%)`).join(', ');
+        const contribucionesText = u.tipo === 'Comercio'
+            ? `<div><strong>Contribución inmobiliaria:</strong> ${u.contribucion_inmobiliaria || '-'}</div><div><strong>Contribución comercio:</strong> ${u.contribucion_comercio || '-'}</div>`
+            : '';
         html += `<tr>
             <td><strong>${u.nombre}</strong></td>
-            <td><div class="note" style="max-width: 250px;">${u.descripcion || '-'}</div></td>
+            <td><div class="unit-details">
+                <div>${u.descripcion || '-'}</div>
+                <div><strong>Nomenclatura:</strong> ${u.nomenclatura_catastral || '-'}</div>
+                <div><strong>Tipo:</strong> ${u.tipo || 'Vivienda'}</div>
+            </div></td>
+            <td><div class="unit-details">
+                <div><strong>Suministro de gas:</strong> ${u.suministro_gas || '-'}</div>
+                <div><strong>Suministro de luz:</strong> ${u.suministro_luz || '-'}</div>
+                <div><strong>Suministro de agua:</strong> ${u.suministro_agua || '-'}</div>
+                ${contribucionesText}
+            </div></td>
             <td>${ownersText}</td>
             <td>
                 <div class="actions">
@@ -159,6 +204,14 @@ function editUnit(id) {
     $('unitCancelBtn').classList.remove('hidden');
     $('unitNombre').value = u.nombre;
     $('unitDescripcion').value = u.descripcion || '';
+    $('unitNomenclatura').value = u.nomenclatura_catastral || '';
+    $('unitSuministroGas').value = u.suministro_gas || '';
+    $('unitSuministroLuz').value = u.suministro_luz || '';
+    $('unitSuministroAgua').value = u.suministro_agua || '';
+    $('unitTipo').value = u.tipo || 'Vivienda';
+    $('unitContribInmob').value = u.contribucion_inmobiliaria || '';
+    $('unitContribComercio').value = u.contribucion_comercio || '';
+    toggleComercioFields();
     $('ownerRows').innerHTML = '';
     Object.entries(u.propietarios).forEach(([n, p]) => addOwnerRow(n, p));
     openTab('unidades');
@@ -285,6 +338,26 @@ function renderCuenta(){
 }
 
 // SITUACION
+function resetSitForm(){
+    sitEditId = null;
+    $('sitTitle').textContent = 'Editar situación';
+    $('sitSaveBtn').textContent = 'Guardar cambios';
+    $('sitCancelBtn').classList.add('hidden');
+    hideError('sitError');
+    $('sitEstado').value = 'Activa';
+    $('sitInicio').value = '';
+    $('sitDuracion').value = '';
+    $('sitActualizacion').value = '';
+    $('sitImporte').value = '';
+    $('sitInquilinoNombre').value = '';
+    $('sitInquilinoDni').value = '';
+    $('sitGarante1Nombre').value = '';
+    $('sitGarante1Dni').value = '';
+    $('sitGarante2Nombre').value = '';
+    $('sitGarante2Dni').value = '';
+    $('sitObs').value = '';
+}
+
 function renderSit(){
     if(!allSituaciones.length){ $('sitTable').innerHTML = '<div class="empty">Todavía no cargaste situaciones.</div>'; return; }
     const selP = $('genPeriodo').value;
@@ -297,13 +370,32 @@ function renderSit(){
             if (tm > 0 && (tm + 1) % s.actualizacion_meses === 0) alertHtml = '<br><span class="alert-badge">AVISO: ACTUALIZAR PRÓXIMO MES</span>';
             else if (tm > 0 && tm % s.actualizacion_meses === 0) alertHtml = '<br><span class="alert-badge" style="background:var(--red);color:white;">ALERTA: ACTUALIZAR AHORA</span>';
         }
-        return `<tr><td><strong>${s.unidad}</strong>${alertHtml}</td><td><span class="status-chip">${s.estado}</span></td><td class="${alertHtml ? 'warning' : ''}"><strong>${money(s.importe_vigente)}</strong></td><td><button class="btn btn-secondary mini" onclick="editSit('${s.unidad}')">Editar</button></td></tr>`;
+        const garantes = [
+            s.garante1_nombre ? `${s.garante1_nombre}${s.garante1_dni ? ' - DNI ' + s.garante1_dni : ''}` : '',
+            s.garante2_nombre ? `${s.garante2_nombre}${s.garante2_dni ? ' - DNI ' + s.garante2_dni : ''}` : ''
+        ].filter(Boolean).join('<br>') || '-';
+        const inquilino = s.inquilino_nombre ? `${s.inquilino_nombre}${s.inquilino_dni ? '<br>DNI ' + s.inquilino_dni : ''}` : '-';
+        return `<tr><td><strong>${s.unidad}</strong>${alertHtml}</td><td><span class="status-chip">${s.estado}</span></td><td>${inquilino}</td><td>${garantes}</td><td class="${alertHtml ? 'warning' : ''}"><strong>${money(s.importe_vigente)}</strong></td><td><button class="btn btn-secondary mini" onclick="editSit('${s.unidad}')">Editar</button></td></tr>`;
     }).join('');
-    $('sitTable').innerHTML = '<div class="table-wrap"><table><thead><tr><th>Unidad</th><th>Estado</th><th>Vigente</th><th>Acciones</th></tr></thead><tbody>' + htmlRows + '</tbody></table></div>';
+    $('sitTable').innerHTML = '<div class="table-wrap"><table><thead><tr><th>Unidad</th><th>Estado</th><th>Inquilino</th><th>Garantes</th><th>Vigente</th><th>Acciones</th></tr></thead><tbody>' + htmlRows + '</tbody></table></div>';
 }
 
 async function saveSit(){
-    const data = { unidad: $('sitUnidad').value, estado: $('sitEstado').value, inicio: $('sitInicio').value, duracion: $('sitDuracion').value, actualizacion: $('sitActualizacion').value, importe: $('sitImporte').value, obs: $('sitObs').value.trim() };
+    const data = {
+        unidad: $('sitUnidad').value,
+        estado: $('sitEstado').value,
+        inicio: $('sitInicio').value,
+        duracion: $('sitDuracion').value,
+        actualizacion: $('sitActualizacion').value,
+        importe: $('sitImporte').value,
+        inquilino_nombre: $('sitInquilinoNombre').value.trim(),
+        inquilino_dni: $('sitInquilinoDni').value.trim(),
+        garante1_nombre: $('sitGarante1Nombre').value.trim(),
+        garante1_dni: $('sitGarante1Dni').value.trim(),
+        garante2_nombre: $('sitGarante2Nombre').value.trim(),
+        garante2_dni: $('sitGarante2Dni').value.trim(),
+        obs: $('sitObs').value.trim()
+    };
     try { await apiFetch('/api/situacion', 'POST', data); resetSitForm(); await loadData(); } catch (e) { showError('sitError', 'Error al guardar situación.'); }
 }
 
@@ -311,7 +403,7 @@ function editSit(un) {
     const item = allSituaciones.find(x => x.unidad === un);
     if(!item) { $('sitUnidad').value = un; resetSitForm(); return; }
     $('sitTitle').textContent = 'Editar situación'; $('sitSaveBtn').textContent = 'Guardar cambios'; $('sitCancelBtn').classList.remove('hidden');
-    $('sitUnidad').value = item.unidad; $('sitEstado').value = item.estado; $('sitInicio').value = item.inicio_contrato || ''; $('sitDuracion').value = item.duracion_meses || ''; $('sitActualizacion').value = item.actualizacion_meses || ''; $('sitImporte').value = item.importe_vigente || ''; $('sitObs').value = item.observacion || '';
+    $('sitUnidad').value = item.unidad; $('sitEstado').value = item.estado; $('sitInicio').value = item.inicio_contrato || ''; $('sitDuracion').value = item.duracion_meses || ''; $('sitActualizacion').value = item.actualizacion_meses || ''; $('sitImporte').value = item.importe_vigente || ''; $('sitInquilinoNombre').value = item.inquilino_nombre || ''; $('sitInquilinoDni').value = item.inquilino_dni || ''; $('sitGarante1Nombre').value = item.garante1_nombre || ''; $('sitGarante1Dni').value = item.garante1_dni || ''; $('sitGarante2Nombre').value = item.garante2_nombre || ''; $('sitGarante2Dni').value = item.garante2_dni || ''; $('sitObs').value = item.observacion || '';
 }
 
 async function generarDevengadoDesdeSituacion(){
@@ -365,6 +457,7 @@ $('genPeriodo').addEventListener('change', renderSit);
 $('unitSaveBtn').addEventListener('click', saveUnit);
 $('unitCancelBtn').addEventListener('click', resetUnitForm);
 $('addOwnerBtn').addEventListener('click', () => addOwnerRow());
+$('unitTipo').addEventListener('change', toggleComercioFields);
 $('themeToggle').addEventListener('click', () => { const isL = document.body.classList.toggle('light-mode'); localStorage.setItem('theme', isL ? 'light' : 'dark'); });
 document.querySelectorAll('.tab-btn').forEach(btn => { btn.addEventListener('click', () => openTab(btn.dataset.tab)); });
 

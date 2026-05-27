@@ -163,6 +163,20 @@ td{color: var(--text-main)}
 
 .owner-row{display:grid;grid-template-columns: 2fr 1fr auto;gap:10px;margin-bottom:10px;align-items:center}
 
+.two{
+  display:grid;
+  grid-template-columns:repeat(2,minmax(0,1fr));
+  gap:12px;
+}
+
+.unit-details{
+  display:grid;
+  gap:4px;
+  min-width:220px;
+  color:var(--text-muted);
+}
+.unit-details strong{color:var(--text-main)}
+
 .person-card{
   background: var(--bg-card);
   border-radius: var(--radius);

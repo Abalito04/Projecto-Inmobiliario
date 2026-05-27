@@ -1,10 +1,14 @@
 from flask import Flask, render_template, jsonify, request
+from sqlalchemy import inspect
 from models import db, Unidad, Movimiento, Devengado, SituacionUnidad
 from datetime import datetime
 import os
 
 app = Flask(__name__)
-app.config['SQLALCHEMY_DATABASE_URI'] = os.environ.get('DATABASE_URL', 'sqlite:///alquileres.db')
+database_url = os.environ.get('DATABASE_URL', 'sqlite:///alquileres.db')
+if database_url.startswith('postgres://'):
+    database_url = database_url.replace('postgres://', 'postgresql://', 1)
+app.config['SQLALCHEMY_DATABASE_URI'] = database_url
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
 db.init_app(app)
@@ -12,6 +16,37 @@ db.init_app(app)
 def seed_db():
     # Eliminamos el precargado para permitir pruebas desde cero
     pass
+
+def ensure_unidad_columns():
+    columns = {column['name'] for column in inspect(db.engine).get_columns('unidad')}
+    new_columns = {
+        'nomenclatura_catastral': 'VARCHAR(120)',
+        'suministro_gas': 'VARCHAR(120)',
+        'suministro_luz': 'VARCHAR(120)',
+        'suministro_agua': 'VARCHAR(120)',
+        'tipo': "VARCHAR(30) DEFAULT 'Vivienda'",
+        'contribucion_inmobiliaria': 'VARCHAR(120)',
+        'contribucion_comercio': 'VARCHAR(120)',
+    }
+    with db.engine.begin() as conn:
+        for name, definition in new_columns.items():
+            if name not in columns:
+                conn.exec_driver_sql(f'ALTER TABLE unidad ADD COLUMN {name} {definition}')
+
+def ensure_situacion_columns():
+    columns = {column['name'] for column in inspect(db.engine).get_columns('situacion_unidad')}
+    new_columns = {
+        'inquilino_nombre': 'VARCHAR(120)',
+        'inquilino_dni': 'VARCHAR(30)',
+        'garante1_nombre': 'VARCHAR(120)',
+        'garante1_dni': 'VARCHAR(30)',
+        'garante2_nombre': 'VARCHAR(120)',
+        'garante2_dni': 'VARCHAR(30)',
+    }
+    with db.engine.begin() as conn:
+        for name, definition in new_columns.items():
+            if name not in columns:
+                conn.exec_driver_sql(f'ALTER TABLE situacion_unidad ADD COLUMN {name} {definition}')
 
 @app.route('/')
 def index():
@@ -26,11 +61,26 @@ def handle_unidades():
             u = Unidad.query.get(data['id'])
             u.nombre = data['nombre']
             u.descripcion = data.get('descripcion') # Guardar descripción
+            u.nomenclatura_catastral = data.get('nomenclatura_catastral')
+            u.suministro_gas = data.get('suministro_gas')
+            u.suministro_luz = data.get('suministro_luz')
+            u.suministro_agua = data.get('suministro_agua')
+            u.tipo = data.get('tipo') or 'Vivienda'
+            u.contribucion_inmobiliaria = data.get('contribucion_inmobiliaria') if u.tipo == 'Comercio' else None
+            u.contribucion_comercio = data.get('contribucion_comercio') if u.tipo == 'Comercio' else None
             u.propietarios = data['propietarios']
         else: # Create
+            tipo = data.get('tipo') or 'Vivienda'
             u = Unidad(
                 nombre=data['nombre'], 
                 descripcion=data.get('descripcion'), 
+                nomenclatura_catastral=data.get('nomenclatura_catastral'),
+                suministro_gas=data.get('suministro_gas'),
+                suministro_luz=data.get('suministro_luz'),
+                suministro_agua=data.get('suministro_agua'),
+                tipo=tipo,
+                contribucion_inmobiliaria=data.get('contribucion_inmobiliaria') if tipo == 'Comercio' else None,
+                contribucion_comercio=data.get('contribucion_comercio') if tipo == 'Comercio' else None,
                 propietarios=data['propietarios']
             )
             db.session.add(u)
@@ -147,6 +197,12 @@ def handle_situacion():
         sit.duracion_meses = int(data.get('duracion') or 0)
         sit.actualizacion_meses = int(data.get('actualizacion') or 0)
         sit.importe_vigente = float(data.get('importe') or 0)
+        sit.inquilino_nombre = data.get('inquilino_nombre')
+        sit.inquilino_dni = data.get('inquilino_dni')
+        sit.garante1_nombre = data.get('garante1_nombre')
+        sit.garante1_dni = data.get('garante1_dni')
+        sit.garante2_nombre = data.get('garante2_nombre')
+        sit.garante2_dni = data.get('garante2_dni')
         sit.observacion = data.get('obs')
         
         db.session.commit()
@@ -177,9 +233,15 @@ def generar_devengados():
     db.session.commit()
     return jsonify({"count": count}), 201
 
-if __name__ == '__main__':
+def init_database():
     with app.app_context():
         db.create_all()
+        ensure_unidad_columns()
+        ensure_situacion_columns()
         seed_db()
+
+init_database()
+
+if __name__ == '__main__':
     port = int(os.environ.get('PORT', 5000))
     app.run(host='0.0.0.0', port=port, debug=False)

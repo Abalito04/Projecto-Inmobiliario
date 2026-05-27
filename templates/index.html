@@ -39,6 +39,28 @@
         <label>Descripción / Características</label>
         <textarea id="unitDescripcion" placeholder="Ej: 3 ambientes, 2 dormitorios, patio, cocina, pileta..." style="min-height: 80px;"></textarea>
         
+        <label>Nomenclatura catastral</label>
+        <input type="text" id="unitNomenclatura" placeholder="Ej: Circ. 1 - Sec. A - Manz. 12 - Parc. 4">
+
+        <label>Suministro de gas</label>
+        <input type="text" id="unitSuministroGas" placeholder="Ej: Medidor / Cuenta">
+        <label>Suministro de luz</label>
+        <input type="text" id="unitSuministroLuz" placeholder="Ej: Medidor / Cuenta">
+        <label>Suministro de agua</label>
+        <input type="text" id="unitSuministroAgua" placeholder="Ej: Medidor / Cuenta">
+
+        <label>Tipo de unidad</label>
+        <select id="unitTipo">
+          <option value="Vivienda">Vivienda</option>
+          <option value="Comercio">Comercio</option>
+        </select>
+        <div id="unitComercioWrap" class="hidden">
+          <label>Contribución inmobiliaria</label>
+          <input type="text" id="unitContribInmob" placeholder="Ej: Cuenta / Padron">
+          <label>Contribución de comercio</label>
+          <input type="text" id="unitContribComercio" placeholder="Ej: Cuenta municipal / habilitacion">
+        </div>
+
         <div id="ownersContainer">
           <label>Propietarios y Porcentajes (0 a 100)</label>
           <div class="owner-rows" id="ownerRows">
@@ -209,6 +231,18 @@
               <div><label>Actualización (meses)</label><input type="number" id="sitActualizacion" min="1" step="1"></div>
             </div>
             <label>Importe vigente</label><input type="number" id="sitImporte" min="0" step="0.01">
+            <div class="two">
+              <div><label>Inquilino</label><input type="text" id="sitInquilinoNombre" placeholder="Nombre y apellido"></div>
+              <div><label>DNI inquilino</label><input type="text" id="sitInquilinoDni" placeholder="DNI"></div>
+            </div>
+            <div class="two">
+              <div><label>Garante 1</label><input type="text" id="sitGarante1Nombre" placeholder="Nombre y apellido"></div>
+              <div><label>DNI garante 1</label><input type="text" id="sitGarante1Dni" placeholder="DNI"></div>
+            </div>
+            <div class="two">
+              <div><label>Garante 2</label><input type="text" id="sitGarante2Nombre" placeholder="Nombre y apellido"></div>
+              <div><label>DNI garante 2</label><input type="text" id="sitGarante2Dni" placeholder="DNI"></div>
+            </div>
             <label>Observación</label><textarea id="sitObs" style="min-height: 60px;"></textarea>
             <div class="toolbar">
               <button class="btn btn-primary" type="button" id="sitSaveBtn" style="width:100%;">Guardar cambios</button>
