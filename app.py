@@ -48,6 +48,12 @@ def ensure_situacion_columns():
             if name not in columns:
                 conn.exec_driver_sql(f'ALTER TABLE situacion_unidad ADD COLUMN {name} {definition}')
 
+def ensure_devengado_columns():
+    columns = {column['name'] for column in inspect(db.engine).get_columns('devengado')}
+    with db.engine.begin() as conn:
+        if 'concepto' not in columns:
+            conn.exec_driver_sql("ALTER TABLE devengado ADD COLUMN concepto VARCHAR(100) DEFAULT 'Alquiler' NOT NULL")
+
 @app.route('/')
 def index():
     return render_template('index.html')
@@ -145,6 +151,45 @@ def delete_movimiento(id):
     db.session.commit()
     return '', 204
 
+@app.route('/api/movimientos/cobrar_devengar', methods=['POST'])
+def cobrar_y_devengar():
+    data = request.json
+    fecha = datetime.strptime(data['fecha'], '%Y-%m-%d').date()
+    unidad = Unidad.query.filter_by(nombre=data['unidad']).first()
+    monto = float(data['monto'])
+
+    if not unidad:
+        return jsonify({"error": "Unidad no encontrada"}), 404
+    if data.get('tipo') != 'Ingreso':
+        return jsonify({"error": "Solo se puede cobrar y devengar un ingreso"}), 400
+
+    try:
+        mov = Movimiento(
+            fecha=fecha,
+            unidad_id=unidad.id,
+            periodo=data['periodo'],
+            tipo=data['tipo'],
+            concepto=data['subtipo'],
+            forma_pago=data.get('forma'),
+            monto=monto,
+            observacion=data.get('obs')
+        )
+        dev = Devengado(
+            unidad_id=unidad.id,
+            periodo=data['periodo'],
+            concepto=data['subtipo'],
+            estado='Alquilado',
+            monto=monto,
+            observacion=f"Devengado automático al cobrar. {data.get('obs') or ''}".strip()
+        )
+        db.session.add(mov)
+        db.session.add(dev)
+        db.session.commit()
+        return jsonify({"movimiento": mov.to_dict(), "devengado": dev.to_dict()}), 201
+    except Exception:
+        db.session.rollback()
+        raise
+
 @app.route('/api/devengados', methods=['GET', 'POST'])
 def handle_devengados():
     if request.method == 'POST':
@@ -155,6 +200,7 @@ def handle_devengados():
             dev = Devengado.query.get(data['id'])
             dev.unidad_id = unidad.id
             dev.periodo = data['periodo']
+            dev.concepto = data.get('concepto') or 'Alquiler'
             dev.estado = data['estado']
             dev.monto = float(data.get('importe', 0))
             dev.observacion = data.get('obs')
@@ -162,6 +208,7 @@ def handle_devengados():
             dev = Devengado(
                 unidad_id=unidad.id,
                 periodo=data['periodo'],
+                concepto=data.get('concepto') or 'Alquiler',
                 estado=data['estado'],
                 monto=float(data.get('importe', 0)),
                 observacion=data.get('obs')
@@ -219,11 +266,12 @@ def generar_devengados():
     count = 0
     for sit in situaciones:
         # Check if devengado already exists for this unit and period
-        existing = Devengado.query.filter_by(unidad_id=sit.unidad_id, periodo=periodo).first()
+        existing = Devengado.query.filter_by(unidad_id=sit.unidad_id, periodo=periodo, concepto='Alquiler').first()
         if not existing:
             dev = Devengado(
                 unidad_id=sit.unidad_id,
                 periodo=periodo,
+                concepto='Alquiler',
                 estado='Alquilado',
                 monto=sit.importe_vigente,
                 observacion='Generado automáticamente'
@@ -238,6 +286,7 @@ def init_database():
         db.create_all()
         ensure_unidad_columns()
         ensure_situacion_columns()
+        ensure_devengado_columns()
         seed_db()
 
 init_database()

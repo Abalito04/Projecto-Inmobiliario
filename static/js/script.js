@@ -2,7 +2,7 @@ const $ = id => document.getElementById(id);
 let movEditId = null, devEditId = null, sitEditId = null, unitEditId = null;
 let allMovimientos = [], allDevengados = [], allSituaciones = [], allUnidades = [];
 
-const incomeTypes = ["Alquiler", "Expensas", "Luz", "Gas", "Agua", "Tasas Municipales", "Intereses", "Cochera"];
+const incomeTypes = ["Alquiler", "Expensas", "Luz", "Gas", "Agua", "Internet", "Tasas Municipales", "Intereses", "Cochera"];
 const expenseTypes = ["Comisión", "Gastos", "Mantenimiento"];
 const allConcepts = [...incomeTypes, ...expenseTypes];
 
@@ -48,6 +48,7 @@ function fillConcepts(){
     const movTipo = $('movTipo').value;
     const list = movTipo === 'Ingreso' ? incomeTypes : expenseTypes;
     $('movConcepto').innerHTML = list.map(c => `<option value="${c}">${c}</option>`).join('');
+    if ($('devConcepto')) $('devConcepto').innerHTML = incomeTypes.map(c => `<option value="${c}">${c}</option>`).join('');
     $('infConceptos').innerHTML = allConcepts.map(c => `<option value="${c}">${c}</option>`).join('');
 }
 
@@ -233,11 +234,21 @@ function resetMovForm(){
     hideError('movError'); $('movFecha').value = new Date().toISOString().split('T')[0]; $('movPeriodo').value = ''; $('movTipo').value = 'Ingreso'; fillConcepts(); $('movForma').value = 'Efectivo'; $('movImporte').value = ''; $('movObs').value = '';
 }
 
-async function saveMov(){
+async function saveMov(devengar = false){
     hideError('movError');
     const data = { id: movEditId, fecha: $('movFecha').value, unidad: $('movUnidad').value, periodo: $('movPeriodo').value, tipo: $('movTipo').value, subtipo: $('movConcepto').value, forma: $('movForma').value, monto: Number($('movImporte').value), obs: $('movObs').value.trim() };
     if(!data.fecha || !data.periodo || !data.monto || data.monto <= 0){ showError('movError','Completá fecha, período e importe mayor a 0.'); return; }
-    try { await apiFetch('/api/movimientos', 'POST', data); resetMovForm(); await loadData(); } catch (e) { showError('movError', 'Error al guardar el movimiento.'); }
+    if (devengar && movEditId) { showError('movError', 'Cobrar y devengar solo se usa al cargar un movimiento nuevo.'); return; }
+    if (devengar && data.tipo !== 'Ingreso') { showError('movError', 'Cobrar y devengar se usa para ingresos/cobros.'); return; }
+    try {
+        if (devengar) {
+            await apiFetch('/api/movimientos/cobrar_devengar', 'POST', data);
+        } else {
+            await apiFetch('/api/movimientos', 'POST', data);
+        }
+        resetMovForm();
+        await loadData();
+    } catch (e) { showError('movError', devengar ? 'Error al cobrar y devengar.' : 'Error al guardar el movimiento.'); }
 }
 
 function editMov(id){
@@ -288,17 +299,17 @@ window.toggleCard = toggleCard;
 // DEVENGADOS
 function resetDevForm(){
     devEditId = null; $('devTitle').textContent = 'Nuevo devengado'; $('devSaveBtn').textContent = 'Guardar devengado'; $('devCancelBtn').classList.add('hidden');
-    hideError('devError'); $('devPeriodo').value = ''; $('devEstado').value = 'Alquilado'; $('devImporte').value = ''; $('devObs').value = '';
+    hideError('devError'); $('devPeriodo').value = ''; $('devConcepto').value = 'Alquiler'; $('devEstado').value = 'Alquilado'; $('devImporte').value = ''; $('devObs').value = '';
 }
 async function saveDev(){
-    const data = { id: devEditId, unidad: $('devUnidad').value, periodo: $('devPeriodo').value, estado: $('devEstado').value, importe: Number($('devImporte').value || 0), obs: $('devObs').value.trim() };
+    const data = { id: devEditId, unidad: $('devUnidad').value, periodo: $('devPeriodo').value, concepto: $('devConcepto').value, estado: $('devEstado').value, importe: Number($('devImporte').value || 0), obs: $('devObs').value.trim() };
     if(!data.periodo){ showError('devError', 'Completá el período.'); return; }
     try { await apiFetch('/api/devengados', 'POST', data); resetDevForm(); await loadData(); } catch (e) { showError('devError', 'Error al guardar devengado.'); }
 }
 function editDev(id){
     const item = allDevengados.find(x => x.id == id); if(!item) return;
     devEditId = id; $('devTitle').textContent = 'Editar devengado'; $('devSaveBtn').textContent = 'Guardar cambios'; $('devCancelBtn').classList.remove('hidden');
-    $('devUnidad').value = item.unidad; $('devPeriodo').value = item.periodo; $('devEstado').value = item.estado; $('devImporte').value = item.monto; $('devObs').value = item.observacion || ''; openTab('dev');
+    $('devUnidad').value = item.unidad; $('devPeriodo').value = item.periodo; $('devConcepto').value = item.concepto || 'Alquiler'; $('devEstado').value = item.estado; $('devImporte').value = item.monto; $('devObs').value = item.observacion || ''; openTab('dev');
 }
 async function deleteDev(id){
     if(!confirm(`¿Eliminar devengado?`)) return;
@@ -306,21 +317,21 @@ async function deleteDev(id){
 }
 function renderDev(){
     if(!allDevengados.length){ $('devTable').innerHTML = '<div class="empty">Todavía no cargaste devengados.</div>'; return; }
-    let html = '<div class="table-wrap"><table><thead><tr><th>Unidad</th><th>Período</th><th>Estado</th><th>Monto</th><th>Acciones</th></tr></thead><tbody>' +
-        allDevengados.map(r => `<tr><td>${r.unidad}</td><td>${r.periodo}</td><td><span class="status-chip">${r.estado}</span></td><td class="ok"><strong>${money(r.monto)}</strong></td><td><div class="actions"><button class="btn btn-secondary mini" onclick="editDev('${r.id}')">✏️</button><button class="btn btn-danger mini" onclick="deleteDev('${r.id}')">✕</button></div></td></tr>`).join('') + '</tbody></table></div>';
+    let html = '<div class="table-wrap"><table><thead><tr><th>Unidad</th><th>Período</th><th>Concepto</th><th>Estado</th><th>Monto</th><th>Acciones</th></tr></thead><tbody>' +
+        allDevengados.map(r => `<tr><td>${r.unidad}</td><td>${r.periodo}</td><td>${r.concepto || 'Alquiler'}</td><td><span class="status-chip">${r.estado}</span></td><td class="ok"><strong>${money(r.monto)}</strong></td><td><div class="actions"><button class="btn btn-secondary mini" onclick="editDev('${r.id}')">✏️</button><button class="btn btn-danger mini" onclick="deleteDev('${r.id}')">✕</button></div></td></tr>`).join('') + '</tbody></table></div>';
     $('devTable').innerHTML = html;
 }
 
 // CUENTA CORRIENTE
 function renderResumenCuenta(){
-    const totalDev = allDevengados.filter(d => d.estado === 'Alquilado').reduce((a,b)=>a + b.monto, 0);
+    const totalDev = allDevengados.filter(d => d.estado === 'Alquilado' && (d.concepto || 'Alquiler').toLowerCase() === 'alquiler').reduce((a,b)=>a + b.monto, 0);
     const totalCob = allMovimientos.filter(m => m.tipo === 'Ingreso' && m.concepto.toLowerCase() === 'alquiler').reduce((a,b)=>a + b.monto, 0);
     const saldo = totalDev - totalCob;
     $('resumenGeneral').innerHTML = `<div class="mobile-cards"><div class="mobile-card"><div class="title">Total devengado</div><div class="amount bad">${money(totalDev)}</div></div><div class="mobile-card"><div class="title">Total cobrado</div><div class="amount ok">${money(totalCob)}</div></div><div class="mobile-card"><div class="title">Saldo pendiente</div><div class="amount ${saldo >= 0 ? 'bad' : 'ok'}">${money(saldo)}</div></div></div>`;
 }
 function renderDeudaUnidad(){
     const unidades = {};
-    allDevengados.filter(d => d.estado === 'Alquilado').forEach(d => { if(!unidades[d.unidad]) unidades[d.unidad] = {dev:0, cob:0}; unidades[d.unidad].dev += d.monto; });
+    allDevengados.filter(d => d.estado === 'Alquilado' && (d.concepto || 'Alquiler').toLowerCase() === 'alquiler').forEach(d => { if(!unidades[d.unidad]) unidades[d.unidad] = {dev:0, cob:0}; unidades[d.unidad].dev += d.monto; });
     allMovimientos.filter(m => m.tipo === 'Ingreso' && m.concepto.toLowerCase() === 'alquiler').forEach(m => { if(!unidades[m.unidad]) unidades[m.unidad] = {dev:0, cob:0}; unidades[m.unidad].cob += m.monto; });
     const arr = Object.entries(unidades).map(([u,v]) => ({unidad:u, dev:v.dev, cob:v.cob, saldo:v.dev - v.cob})).sort((a,b) => b.saldo - a.saldo);
     if(!arr.length){ $('deudaUnidad').innerHTML = '<div class="empty">No hay datos de alquiler.</div>'; return; }
@@ -329,7 +340,7 @@ function renderDeudaUnidad(){
 function renderCuenta(){
     const unidad = $('ccUnidad').value;
     const rows = [];
-    allDevengados.filter(d => d.unidad === unidad && d.estado === 'Alquilado').forEach(d => rows.push({fecha: d.periodo + '-01', periodo: d.periodo, concepto: 'Devengado', debe: d.monto, haber: 0}));
+    allDevengados.filter(d => d.unidad === unidad && d.estado === 'Alquilado' && (d.concepto || 'Alquiler').toLowerCase() === 'alquiler').forEach(d => rows.push({fecha: d.periodo + '-01', periodo: d.periodo, concepto: 'Devengado', debe: d.monto, haber: 0}));
     allMovimientos.filter(m => m.unidad === unidad && m.tipo === 'Ingreso' && m.concepto.toLowerCase() === 'alquiler').forEach(m => rows.push({fecha: m.fecha, periodo: m.periodo, concepto: 'Cobro', debe: 0, haber: m.monto}));
     rows.sort((a,b) => a.fecha.localeCompare(b.fecha));
     if(!rows.length){ $('ccTable').innerHTML = '<div class="empty">Sin movimientos de alquiler.</div>'; return; }
@@ -428,7 +439,7 @@ function renderReport(fm){
     const el = $('infTable');
     if (fm.length === allMovimientos.length) {
         const ud = {}; allUnidades.forEach(u => { ud[u.nombre] = { dev: 0, cob: 0 }; });
-        allDevengados.forEach(d => { if(ud[d.unidad] && d.estado === 'Alquilado') ud[d.unidad].dev += d.monto; });
+        allDevengados.forEach(d => { if(ud[d.unidad] && d.estado === 'Alquilado' && (d.concepto || 'Alquiler').toLowerCase() === 'alquiler') ud[d.unidad].dev += d.monto; });
         allMovimientos.forEach(m => { if(ud[m.unidad] && m.tipo === 'Ingreso' && m.concepto.toLowerCase() === 'alquiler') ud[m.unidad].cob += m.monto; });
         const arr = Object.entries(ud).map(([u,v]) => ({ unidad: u, dev: v.dev, cob: v.cob, deuda: v.dev - v.cob })).sort((a,b) => b.deuda - a.deuda);
         el.innerHTML = `<h3 style="margin-bottom:15px; color:var(--text-muted); font-size:16px;">📊 Resumen General de Deudas (Alquiler)</h3><div class="table-wrap"><table><thead><tr><th>Unidad</th><th>Devengado</th><th>Cobrado</th><th>Estado</th></tr></thead><tbody>${arr.map(r => `<tr><td><strong>${r.unidad}</strong></td><td>${money(r.dev)}</td><td>${money(r.cob)}</td><td class="${r.deuda > 0 ? 'bad' : 'ok'}"><strong>${r.deuda > 0 ? 'DEBE ' + money(r.deuda) : (r.deuda < 0 ? 'A FAVOR ' + money(Math.abs(r.deuda)) : 'AL DÍA')}</strong></td></tr>`).join('')}</tbody></table></div>`;
@@ -443,7 +454,8 @@ function renderAll(){ fillAllSelects(); renderMov(); renderDist(); renderDev(); 
 
 // Event Listeners
 $('movTipo').addEventListener('change', fillConcepts);
-$('movSaveBtn').addEventListener('click', saveMov);
+$('movSaveBtn').addEventListener('click', () => saveMov(false));
+$('movSaveDevBtn').addEventListener('click', () => saveMov(true));
 $('movCancelBtn').addEventListener('click', resetMovForm);
 $('devSaveBtn').addEventListener('click', saveDev);
 $('devCancelBtn').addEventListener('click', resetDevForm);

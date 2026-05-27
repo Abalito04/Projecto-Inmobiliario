@@ -61,6 +61,7 @@ class Devengado(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     unidad_id = db.Column(db.Integer, db.ForeignKey('unidad.id'), nullable=False)
     periodo = db.Column(db.String(7), nullable=False)
+    concepto = db.Column(db.String(100), nullable=False, default="Alquiler")
     estado = db.Column(db.String(20), nullable=False) # Alquilado / No alquilado
     monto = db.Column(db.Float, nullable=False)
     observacion = db.Column(db.Text)
@@ -72,6 +73,7 @@ class Devengado(db.Model):
             "id": self.id,
             "unidad": self.unidad.nombre,
             "periodo": self.periodo,
+            "concepto": self.concepto or "Alquiler",
             "estado": self.estado,
             "monto": self.monto,
             "observacion": self.observacion
